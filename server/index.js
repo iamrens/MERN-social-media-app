@@ -17,12 +17,10 @@ import { verifyToken } from "./middleware/auth.js";
 import User from "./models/User.js";
 import Post from "./models/Post.js";
 import { users, posts } from "./data/index.js";
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
 
-
-
-/* CONFIGURATIONS */
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// CONFIGS
 dotenv.config();
 const app = express();
 app.use(express.json());
@@ -32,22 +30,60 @@ app.use(morgan("common"));
 app.use(bodyParser.json({ limit: "30mb", extended: true }));
 app.use(bodyParser.urlencoded({ limit: "30mb", extended: true }));
 app.use(cors());
-app.use("/assets", express.static(path.join(__dirname, "public/assets")));
+// app.use("/assets", express.static(path.join(__dirname, "public/assets")));
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+
 
 // FILE STORAGE
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, "public/assets");
-    },
-    filename: function (req, file, cb) {
-      cb(null, file.originalname);
-    },
-  });
-const upload = multer({ storage });
+// const storage = multer.diskStorage({
+//     destination: function (req, file, cb) {
+//       cb(null, "public/assets");
+//     },
+//     filename: function (req, file, cb) {
+//       cb(null, file.originalname);
+//     },
+//   });
+// const upload = multer({ storage });
+
+// Set up Multer for handling file uploads
+// const upload = multer({ dest: 'uploads/' });
+
+// Set up Cloudinary storage for profile pictures
+const profileStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'friendzone-mern/profile-pictures',
+    allowedFormats: ['jpg', 'png', 'jpeg'],
+  },
+  filename: (req, file, cb) => {
+    cb(undefined, file.originalname);
+}
+});
+
+// Set up Cloudinary storage for post pictures
+const postStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'friendzone-mern/post-pictures',
+    allowedFormats: ['jpg', 'png', 'jpeg'],
+  },
+  filename: (req, file, cb) => {
+    cb(undefined, file.originalname);
+}
+});
+
+// Set up Multer for handling file uploads
+const uploadProfile = multer({ storage: profileStorage, limits: { fileSize: 2097152 } });
+const uploadPost = multer({ storage: postStorage, limits: { fileSize: 2097152 } });
 
 // ROUTES WITH FILES
-app.post("/auth/register", upload.single("picture"), register);
-app.post("/posts", verifyToken, upload.single("picture"), createPost);
+app.post("/auth/register", uploadProfile.single("picture"), register);
+app.post("/posts", verifyToken, uploadPost.single("image"), createPost);
 
 // ROUTES
 app.use("/auth", authRoutes);

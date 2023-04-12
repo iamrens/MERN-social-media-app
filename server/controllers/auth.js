@@ -2,16 +2,6 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import validator from "validator";
-import { v2 as cloudinary } from 'cloudinary';
-import dotenv from "dotenv";
-
-dotenv.config();
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
 
 // REGISTER USER
 export const register = async (req, res) => {
@@ -21,21 +11,35 @@ export const register = async (req, res) => {
       lastName,
       email,
       password,
-      picturePath,
       friends,
       location,
       occupation,
     } = req.body;
 
     // validation
-    if (!email || !password) {
-        throw new Error('Please provide both email and password.');
+    if (!email || !password || !firstName || !lastName ) {
+        throw new Error('Please provide the required fields');
     }
     if (!validator.isEmail(email)){
         throw new Error('Invalid email format.');
     }
     if (!validator.isStrongPassword(password)){
         throw new Error('Password must be strong. Use at least 8 characters, including uppercase letters, digits, and symbols.');
+    }
+    if (req.file && !['image/jpg', 'image/png', 'image/jpeg'].includes(req.file.mimetype)) {
+      throw new Error('Invalid image format.');
+    }
+    if (req.file && req.file.size > 2097152) {
+      throw new Error("Image must be less than 2mb");
+    }
+
+    // Default picture if there will be no uploaded image
+    const firstNameInitial = firstName.charAt(0).toUpperCase();
+    const defaultProfile = `https://ui-avatars.com/api/?name=${firstNameInitial}&background=random&color=random&rounded=true&bold=true`;
+
+    let picturePath = defaultProfile;
+    if (req.file && req.file.path) {
+      picturePath = req.file.path;
     }
 
     const salt = await bcrypt.genSalt();
@@ -63,7 +67,7 @@ export const register = async (req, res) => {
     const savedUser = await newUser.save();
     res.status(201).json(savedUser);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -89,13 +93,13 @@ export const login = async (req, res) => {
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-        throw new Error("Invalid credentials");
+        throw new Error("Wrong email or password");
     }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
     delete user.password;
     res.status(200).json({ token, user });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ message: err.message });
   }
 };

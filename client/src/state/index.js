@@ -5,6 +5,12 @@ const initialState = {
   user: null,
   token: null,
   posts: [],
+  snackbar: {
+    open: false,
+    message: "",
+    severity: "success",
+    autoHideDuration: 3000,
+  },
 };
 
 export const authSlice = createSlice({
@@ -39,9 +45,20 @@ export const authSlice = createSlice({
       });
       state.posts = updatedPosts;
     },
+    showSnackbar: (state, action) => {
+      state.snackbar.open = true;
+      state.snackbar.message = action.payload.message;
+      state.snackbar.severity = action.payload.severity;
+      state.snackbar.autoHideDuration = action.payload.autoHideDuration;
+    },
+    hideSnackbar: (state) => {
+      state.snackbar.open = false;
+      state.snackbar.message = "";
+      state.snackbar.severity = "success";
+    },
   },
 });
 
-export const { setMode, setLogin, setLogout, setFriends, setPosts, setPost } =
+export const { setMode, setLogin, setLogout, setFriends, setPosts, setPost, showSnackbar, hideSnackbar } =
   authSlice.actions;
 export default authSlice.reducer;

@@ -8,6 +8,7 @@ import Login from "./scenes/login/Login";
 import Homepage from "./scenes/Homepage";
 import Profile from "./scenes/Profile";
 import Scroll from "./components/Scroll";
+import MySnackbar from "./components/MySnackbar";
 
 function App() {
   const mode = useSelector((state) => state.mode);
@@ -25,6 +26,7 @@ function App() {
             <Route path="/home" element={ isAuth ? <Homepage /> : <Navigate to="/" /> }/>
             <Route path="/profile/:userId" element={ isAuth ? <Profile /> : <Navigate to="/" /> } />
           </Routes>
+          <MySnackbar />
         </ThemeProvider>
       </BrowserRouter>
     </div>

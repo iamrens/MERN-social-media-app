@@ -1,12 +1,15 @@
 import { EditOutlined, DeleteOutlined, AttachFileOutlined, GifBoxOutlined, ImageOutlined, MicOutlined, MoreHorizOutlined} from "@mui/icons-material";
-import { Box, Divider, Typography, InputBase, useTheme, Button, IconButton, useMediaQuery} from "@mui/material";
+import { Box, Divider, Typography, InputBase, useTheme, Button, IconButton, useMediaQuery, CircularProgress} from "@mui/material";
 import FlexBetween from "../../components/FlexBetween";
 import Dropzone from "react-dropzone";
 import UserImage from "../../components/UserImage";
 import WidgetWrapper from "../../components/WidgetWrapper";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setPosts } from "../../state";
+import { setPosts, showSnackbar } from "../../state";
+import axios from "axios";
+
+const dbApi = process.env.REACT_APP_DB_API;
 
 const MyPostWidget = ({ picturePath }) => {
   const dispatch = useDispatch();
@@ -19,31 +22,56 @@ const MyPostWidget = ({ picturePath }) => {
   const isNonMobileScreens = useMediaQuery("(min-width: 960px)");
   const mediumMain = palette.neutral.mediumMain;
   const medium = palette.neutral.medium;
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(false);
 
   const handlePost = async () => {
-    const formData = new FormData();
-    formData.append("userId", _id);
-    formData.append("description", post);
-    if (image) {
-      formData.append("picture", image);
-      formData.append("picturePath", image.name);
+    if (!post.trim()) {
+      dispatch(showSnackbar({ open: true, message: 'Please enter a post!', severity: 'warning', autoHideDuration: 3000 }));
+      return;
     }
 
-    const response = await fetch(`http://localhost:4000/posts`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData,
-    });
-    const posts = await response.json();
-    dispatch(setPosts({ posts }));
-    setImage(null);
-    setPost("");
+    setIsLoading(true);
+    dispatch(showSnackbar({ open: true, message: 'Posting...', severity: 'info', autoHideDuration: null }));
+    try {
+      const formData = new FormData();
+      formData.append("userId", _id);
+      formData.append("description", post);
+      if (image) {
+        formData.append("image", image);
+      }
+
+      // console.log(...formData);
+
+      const response = await axios.post(`${dbApi}/posts`, 
+      formData, {
+        headers: { 
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`
+        },
+      });
+
+      const posts = response.data;
+      dispatch(setPosts({ posts }));
+      setImage(null);
+      setPost("");
+
+      dispatch(showSnackbar({ open: true, message: 'Post created successfully', severity: 'success', autoHideDuration: 3000 }));
+
+    } catch (err) {
+      console.log(err, err.response.data.message)
+      // setError(err.response.data.message || 'An error occurred')
+      dispatch(showSnackbar({ open: true, message: 'Failed to create post!', severity: 'error', autoHideDuration: 3000 }));
+    } finally {
+      setIsLoading(null);
+    }
+    
   };
 
   return (
     <WidgetWrapper mb="1.5rem">
       <FlexBetween gap="1.5rem">
-        <UserImage image={picturePath} />
+        <UserImage picturePath={picturePath} />
         <InputBase
           placeholder="What's on your mind..."
           onChange={(e) => setPost(e.target.value)}
@@ -64,42 +92,65 @@ const MyPostWidget = ({ picturePath }) => {
           p="1rem"
         >
           <Dropzone
-            acceptedFiles=".jpg,.jpeg,.png"
+            accept={{ 
+              "image/jpeg": [".jpg", ".jpeg"],
+              "image/png": [".png"],
+              "image/jpg": [".jpg", ".jpeg"]
+            }}
+            validator={file => {
+              if (file.size > 2097152) {
+                setError("Image must be less than 2mb")
+              } else {
+                setError(false)
+              }
+            }}
             multiple={false}
-            onDrop={(acceptedFiles) => setImage(acceptedFiles[0])}
+            onDrop={(acceptedFiles) => {
+              setImage(acceptedFiles[0]);
+              // setError(null);
+            }}
+            onDropRejected={(rejectedFiles) => setError("Invalid image format")}
           >
             {({ getRootProps, getInputProps }) => (
               <FlexBetween>
                 <Box
                   {...getRootProps()}
                   border={`2px dashed ${palette.primary.main}`}
-                  p="1rem"
+                  p="1.5rem 1rem"
                   width="100%"
                   sx={{ "&:hover": { cursor: "pointer" } }}
                 >
                   <input {...getInputProps()} />
                   {!image ? (
-                    <p>Add Image Here</p>
+                    <Typography>Add Image Here</Typography>
                   ) : (
                     <FlexBetween>
                       <Typography>{image.name}</Typography>
-                      <EditOutlined />
+                      <EditOutlined sx={{fontSize: "1.5rem"}}/>
                     </FlexBetween>
                   )}
                 </Box>
                 {image && (
                   <IconButton
-                    onClick={() => setImage(null)}
-                    sx={{ width: "15%" }}
+                    onClick={() => {
+                      setImage(null);
+                      setError(false);
+                    }}
                   >
-                    <DeleteOutlined />
+                    <DeleteOutlined sx={{fontSize: "1.5rem"}}/>
                   </IconButton>
                 )}
               </FlexBetween>
             )}
           </Dropzone>
+          
         </Box>
+        
       )}
+
+      <Box>
+        {error && <Typography variant="body1" color="error">{error}</Typography>}
+      </Box>
 
       <Divider sx={{ margin: "1.25rem 0" }} />
 
@@ -138,7 +189,7 @@ const MyPostWidget = ({ picturePath }) => {
         )}
 
         <Button
-          disabled={!post}
+          disabled={!post || isLoading || !!error}
           onClick={handlePost}
           sx={{
             color: palette.background.alt,
@@ -146,7 +197,11 @@ const MyPostWidget = ({ picturePath }) => {
             borderRadius: "3rem",
           }}
         >
-          POST
+          {isLoading ? (
+            <CircularProgress size={24} sx={{color: palette.background.alt}}/>
+          ) : (
+            "POST"
+          )}
         </Button>
       </FlexBetween>
     </WidgetWrapper>

@@ -1,18 +1,16 @@
-import {
-    ManageAccountsOutlined,
-    EditOutlined,
-    LocationOnOutlined,
-    WorkOutlineOutlined,
-  } from "@mui/icons-material";
+import { ManageAccountsOutlined, EditOutlined, LocationOnOutlined, WorkOutlineOutlined } from "@mui/icons-material";
 import { Box, Typography, Divider, useTheme } from "@mui/material";
-import UserImage from "../../components/UserImage";
-import FlexBetween from "../../components/FlexBetween";
-import WidgetWrapper from "../../components/WidgetWrapper";
 import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import UserImage from "../../components/UserImage";
+import FlexBetween from "../../components/FlexBetween";
+import WidgetWrapper from "../../components/WidgetWrapper";
 
-const UserWidget = ({ userId, picturePath }) => {
+const dbApi = process.env.REACT_APP_DB_API;
+
+const UserWidget = ({ userId }) => {
     const [user, setUser] = useState(null);
     const { palette } = useTheme();
     const navigate = useNavigate();
@@ -22,12 +20,14 @@ const UserWidget = ({ userId, picturePath }) => {
     const main = palette.neutral.main;
   
     const getUser = async () => {
-      const response = await fetch(`http://localhost:4000/users/${userId}`, {
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await response.json();
-      setUser(data);
+      try {
+        const response = await axios.get(`${dbApi}/users/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setUser(response.data);
+      } catch (err) {
+        console.error(err || err.response.data.message);
+      }
     };
   
     useEffect(() => {
@@ -43,6 +43,7 @@ const UserWidget = ({ userId, picturePath }) => {
       lastName,
       location,
       occupation,
+      picturePath,
       viewedProfile,
       impressions,
       friends,
@@ -57,7 +58,7 @@ const UserWidget = ({ userId, picturePath }) => {
           onClick={() => navigate(`/profile/${userId}`)}
         >
           <FlexBetween gap="1rem">
-            <UserImage image={picturePath} />
+            <UserImage picturePath={picturePath}/>
             <Box>
               <Typography
                 variant="h4"
@@ -72,7 +73,7 @@ const UserWidget = ({ userId, picturePath }) => {
               >
                 {firstName} {lastName}
               </Typography>
-              <Typography color={medium}>{friends.length} friends</Typography>
+              <Typography color={medium}>{friends.length} friend/s</Typography>
             </Box>
           </FlexBetween>
           <ManageAccountsOutlined />

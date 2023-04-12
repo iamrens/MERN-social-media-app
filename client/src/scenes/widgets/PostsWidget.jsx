@@ -1,7 +1,10 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setPosts } from "../../state";
+import { setPosts, showSnackbar } from "../../state";
 import PostWidget from "./PostWidget";
+import axios from "axios";
+
+const dbApi = process.env.REACT_APP_DB_API;
 
 const PostsWidget = ({ userId, isProfile = false }) => {
   const dispatch = useDispatch();
@@ -9,24 +12,30 @@ const PostsWidget = ({ userId, isProfile = false }) => {
   const token = useSelector((state) => state.token);
 
   const getPosts = async () => {
-    const response = await fetch("http://localhost:4000/posts", {
-      method: "GET",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await response.json();
-    dispatch(setPosts({ posts: data }));
+    try {
+      const response = await axios.get(`${dbApi}/posts`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.data;
+      dispatch(setPosts({ posts: data }));
+    } catch (err) {
+      console.log(err, err.response.data.message);
+      dispatch(showSnackbar({ open: true, message: 'Error fetching data!', severity: 'error', autoHideDuration: 3000 }));
+    }
+    
   };
 
   const getUserPosts = async () => {
-    const response = await fetch(
-      `http://localhost:4000/posts/${userId}/posts`,
-      {
-        method: "GET",
+    try {
+      const response = await axios.get(`${dbApi}/posts/${userId}/posts`, {
         headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    const data = await response.json();
-    dispatch(setPosts({ posts: data }));
+      });
+      const data = await response.data;
+      dispatch(setPosts({ posts: data }));
+    } catch (err) {
+      console.log(err, err.response.data.message);
+      dispatch(showSnackbar({ open: true, message: 'Error fetching data!', severity: 'error', autoHideDuration: 3000 }));
+    }
   };
 
   useEffect(() => {

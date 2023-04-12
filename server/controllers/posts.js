@@ -1,28 +1,26 @@
 import Post from "../models/Post.js";
 import User from "../models/User.js";
-import { v2 as cloudinary } from 'cloudinary';
-import dotenv from "dotenv";
-
-dotenv.config();
-
-cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+import mongoose from "mongoose";
 
 // CREATE
 export const createPost = async (req, res) => {
   try {
-    const { userId, description, picturePath } = req.body;
+    const { userId, description } = req.body;
     const user = await User.findById(userId);
 
+    // validation
     if(!user) throw new Error('User not found');
+    if (req.file && !['image/jpg', 'image/png', 'image/jpeg'].includes(req.file.mimetype)) {
+      throw new Error('Invalid image format.');
+    }
+    if (req.file && req.file.size > 2097152) {
+      throw new Error("Image must be less than 2mb");
+    }
 
-    // let photoUrl;
-    // if (picturePath) {
-    //     photoUrl = await cloudinary.uploader.upload(picturePath);
-    // }
+    let picturePath = "";
+    if (req.file && req.file.path) {
+      picturePath = req.file.path;
+    }
 
     const newPost = new Post({
       userId,
@@ -30,9 +28,8 @@ export const createPost = async (req, res) => {
       lastName: user.lastName,
       location: user.location,
       description,
-      userPicturePath: user.picturePath,
-      // picturePath: photoUrl ? photoUrl.url : null,
       picturePath,
+      userPicturePath: user.picturePath,
       likes: {},
       comments: [],
     });
@@ -141,3 +138,99 @@ export const deletePost = async (req, res) => {
       res.status(404).json({ message: err.message });
   }
 };
+
+export const postComment = async (req, res) => {
+  try {
+      const { postId } = req.params;
+      const { userId, comment } = req.body;
+
+      const newComment = {
+        commentId: new mongoose.Types.ObjectId().toString(),
+        userId,
+        comment,
+        createdAt: Date.now(),
+      };
+      const post = await Post.findById(postId);
+
+      if (!post) throw new Error('Post not found');
+
+      post.comments.push(newComment);
+
+      const updatedPost = await Post.findByIdAndUpdate(
+        postId, 
+        {comments: post.comments},
+        {new: true}
+      );
+
+      res.status(200).json(updatedPost);
+  } catch (err) {
+      res.status(404).json({ message: err.message });
+  }
+}
+
+export const deleteComment = async (req, res) => {
+  try {
+    const { postId, commentId } = req.params;
+    const { userId } = req.body;
+    const post = await Post.findById(postId);
+    const comment = post.comments.find(c => c.commentId === commentId);
+
+    // console.log(post);
+
+    // validation
+    if (!post) throw new Error('Post not found');
+    if (!comment) {
+      throw new Error('Comment not found');
+    }
+    if (comment.userId !== userId) {
+      throw new Error('User is not authorized to delete this comment');
+    }
+
+    const updatedPost = await Post.findByIdAndUpdate(
+      postId,
+      {$pull: {comments: { commentId: commentId}}},
+      {new: true}
+    );
+
+    // console.log(updatedPost);
+
+    res.status(200).json(updatedPost);
+  } catch (err) {
+    res.status(404).json({ message: err.message });
+  }
+}
+
+export const updateComment = async (req, res) => {
+  try {
+    const { postId, commentId } = req.params;
+    const { userId, updatedComment } = req.body;
+    const post = await Post.findById(postId);
+    const comment = post.comments.find(c => c.commentId === commentId);
+
+    console.log(post);
+
+    // validation
+    if (!post) throw new Error('Post not found');
+    if (!comment) {
+      throw new Error('Comment not found');
+    }
+    if (comment.userId !== userId) {
+      throw new Error('User is not authorized to delete this comment');
+    }
+
+    // update a comment
+    comment.comment = updatedComment;
+
+    const updatedPost = await Post.findByIdAndUpdate(
+      postId,
+      { comments: post.comments },
+      { new: true }
+    );
+
+    console.log(updatedPost);
+
+    res.status(200).json(updatedPost);
+  } catch (err) {
+    res.status(404).json({ message: err.message });
+  }
+}

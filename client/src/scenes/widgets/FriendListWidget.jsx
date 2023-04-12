@@ -5,6 +5,8 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setFriends } from "../../state";
 
+const dbApi = process.env.REACT_APP_DB_API;
+
 const FriendListWidget = ({ userId }) => {
   const dispatch = useDispatch();
   const { palette } = useTheme();
@@ -13,7 +15,7 @@ const FriendListWidget = ({ userId }) => {
 
   const getFriends = async () => {
     const response = await fetch(
-      `http://localhost:4000/users/${userId}/friends`,
+      `${dbApi}/users/${userId}/friends`,
       {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
@@ -44,7 +46,7 @@ const FriendListWidget = ({ userId }) => {
         <Box display="flex" flexDirection="column" gap="1.5rem" mt="1rem">
           {friends.map((friend) => (
             <Friend
-              key={friend._id}
+              key={`friend_${friend._id}`}
               friendId={friend._id}
               name={`${friend.firstName} ${friend.lastName}`}
               subtitle={friend.occupation}

@@ -6,14 +6,18 @@ import { useNavigate } from "react-router-dom";
 import { setFriends } from "../state";
 import FlexBetween from "./FlexBetween";
 import UserImage from "./UserImage";
+import axios from "axios";
+
+const dbApi = process.env.REACT_APP_DB_API;
 
 const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { _id } = useSelector((state) => state.user);
+    const { _id, friends } = useSelector((state) => state.user);
     const token = useSelector((state) => state.token);
-    const friends = useSelector((state) => state.user.friends);
+    // const friends = useSelector((state) => state.user.friends);
     const [ isLoading, setIsLoading ] = useState(false);
+    const isFriend = friends.find((friend) => friend._id === friendId);
   
     const { palette } = useTheme();
     const primaryLight = palette.primary.light;
@@ -21,25 +25,22 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
     const main = palette.neutral.main;
     const medium = palette.neutral.medium;
   
-    const isFriend = friends.find((friend) => friend._id === friendId);
-  
-    const patchFriend = async () => {
+    const addRemoveFriend = async () => {
         setIsLoading(true);
         try {
-          const response = await fetch(
-            `http://localhost:4000/users/${_id}/${friendId}`,
+          const response = await axios.patch(`${dbApi}/users/${_id}/${friendId}`,
+            {},
             {
-              method: "PATCH",
               headers: {
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",
               },
             }
           );
-          const data = await response.json();
+          const data = await response.data;
           dispatch(setFriends({ friends: data }));
         } catch (err) {
-          console.log(err);
+          console.log(err, err.response.data.message);
         } finally {
           setIsLoading(false);
         }
@@ -48,7 +49,7 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
     return (
       <FlexBetween>
         <FlexBetween gap="1rem">
-          <UserImage image={userPicturePath} size="55px" />
+          <UserImage picturePath={userPicturePath} size="55px" />
           <Box
             onClick={() => {
               navigate(`/profile/${friendId}`);
@@ -75,17 +76,17 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
         </FlexBetween>
         {_id === friendId ? null :  
          <IconButton
-            onClick={() => patchFriend()}
+            onClick={() => addRemoveFriend()}
             disabled={isLoading}
             sx={{ backgroundColor: primaryLight, p: "0.6rem" }}
           >
             {isLoading ? (
               <CircularProgress size={24} color="primary" />
-              ) : isFriend ? (
+              ) : (isFriend ? (
                   <PersonRemoveOutlined sx={{ color: primaryDark }} />
               ) : (
                   <PersonAddOutlined sx={{ color: primaryDark }} />
-              )}
+              ))}
           </IconButton>}
       </FlexBetween>
     );
