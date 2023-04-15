@@ -8,7 +8,6 @@ import FlexBetween from "./FlexBetween";
 import UserImage from "./UserImage";
 import axios from "axios";
 
-
 const dbApi = process.env.REACT_APP_DB_API;
 
 const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
@@ -24,7 +23,7 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
     const primaryDark = palette.primary.dark;
     const main = palette.neutral.main;
     const medium = palette.neutral.medium;
-  
+
     const addRemoveFriend = async () => {
         setIsLoading(true);
         try {

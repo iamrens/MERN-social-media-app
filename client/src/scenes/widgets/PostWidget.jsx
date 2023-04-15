@@ -8,7 +8,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { setPost, showSnackbar, setPosts } from "../../state";
 import axios from "axios";
 import Comment from "../../components/Comment";
-import { formatDistanceToNow } from 'date-fns';
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
@@ -28,7 +27,6 @@ const PostWidget = ({
     userPicturePath,
     likes,
     comments,
-    createdAt
 }) => {
     const [isComments, setIsComments] = useState(false);
     const [comment , setComment] = useState("");
