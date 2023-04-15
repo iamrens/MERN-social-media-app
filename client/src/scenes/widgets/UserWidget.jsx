@@ -1,25 +1,29 @@
 import { ManageAccountsOutlined, EditOutlined, LocationOnOutlined, WorkOutlineOutlined } from "@mui/icons-material";
-import { Box, Typography, Divider, useTheme } from "@mui/material";
-import { useSelector } from "react-redux";
+import { Box, Typography, Divider, useTheme, IconButton, Tooltip, CircularProgress } from "@mui/material";
+import { useSelector, useDispatch } from "react-redux";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import UserImage from "../../components/UserImage";
 import FlexBetween from "../../components/FlexBetween";
 import WidgetWrapper from "../../components/WidgetWrapper";
+import { showSnackbar } from "../../state";
 
 const dbApi = process.env.REACT_APP_DB_API;
 
 const UserWidget = ({ userId }) => {
     const [user, setUser] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
     const { palette } = useTheme();
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     const token = useSelector((state) => state.token);
     const dark = palette.neutral.dark;
     const medium = palette.neutral.medium;
     const main = palette.neutral.main;
   
     const getUser = async () => {
+      setIsLoading(true)
       try {
         const response = await axios.get(`${dbApi}/users/${userId}`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -27,6 +31,9 @@ const UserWidget = ({ userId }) => {
         setUser(response.data);
       } catch (err) {
         console.error(err || err.response.data.message);
+        dispatch(showSnackbar({ open: true, message: 'Error getting profile!', severity: 'error', autoHideDuration: 3000 }));
+      } finally {
+        setIsLoading(false)
       }
     };
   
@@ -50,12 +57,18 @@ const UserWidget = ({ userId }) => {
     } = user;
   
     return (
+      <>
+      { isLoading ?
+        <Box>
+          <CircularProgress size={48} sx={{color: palette.primary.main}}/> 
+        </Box> 
+      :
       <WidgetWrapper>
         {/* FIRST ROW */}
         <FlexBetween
           gap="0.5rem"
           pb="1.1rem"
-          onClick={() => navigate(`/profile/${userId}`)}
+          // onClick={() => navigate(`/profile/${userId}`)}
         >
           <FlexBetween gap="1rem">
             <UserImage picturePath={picturePath}/>
@@ -64,6 +77,7 @@ const UserWidget = ({ userId }) => {
                 variant="h4"
                 color={dark}
                 fontWeight="500"
+                onClick={() => navigate(`/profile/${userId}`)}
                 sx={{
                   "&:hover": {
                     color: palette.primary.light,
@@ -76,7 +90,11 @@ const UserWidget = ({ userId }) => {
               <Typography color={medium}>{friends.length} friend/s</Typography>
             </Box>
           </FlexBetween>
-          <ManageAccountsOutlined />
+          <Tooltip title="In development..." placement="top">
+            <IconButton>
+              <ManageAccountsOutlined />
+            </IconButton>
+          </Tooltip>
         </FlexBetween>
   
         <Divider />
@@ -145,7 +163,10 @@ const UserWidget = ({ userId }) => {
             <EditOutlined sx={{ color: main }} />
           </FlexBetween>
         </Box>
+        
       </WidgetWrapper>
+      }
+      </>
     );
   };
   

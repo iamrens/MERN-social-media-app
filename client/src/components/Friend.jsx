@@ -3,10 +3,11 @@ import { Box, IconButton, Typography, useTheme, CircularProgress } from "@mui/ma
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { setFriends } from "../state";
+import { setFriends, showSnackbar } from "../state";
 import FlexBetween from "./FlexBetween";
 import UserImage from "./UserImage";
 import axios from "axios";
+
 
 const dbApi = process.env.REACT_APP_DB_API;
 
@@ -15,7 +16,6 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
     const navigate = useNavigate();
     const { _id, friends } = useSelector((state) => state.user);
     const token = useSelector((state) => state.token);
-    // const friends = useSelector((state) => state.user.friends);
     const [ isLoading, setIsLoading ] = useState(false);
     const isFriend = friends.find((friend) => friend._id === friendId);
   
@@ -39,8 +39,13 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
           );
           const data = await response.data;
           dispatch(setFriends({ friends: data }));
+
+          const message = isFriend ? "Successfully remove from friendlist." : "Successfully added from friendlist."
+          dispatch(showSnackbar({ open: true, message: message, severity: 'success', autoHideDuration: 3000 }));
         } catch (err) {
           console.log(err, err.response.data.message);
+          const message = isFriend ? "Error removing friend!" : "Error adding friend!"
+          dispatch(showSnackbar({ open: true, message: message, severity: 'error', autoHideDuration: 3000 }));
         } finally {
           setIsLoading(false);
         }
@@ -74,7 +79,7 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
             </Typography>
           </Box>
         </FlexBetween>
-        {_id === friendId ? null :  
+        {_id === friendId ? null :
          <IconButton
             onClick={() => addRemoveFriend()}
             disabled={isLoading}

@@ -91,49 +91,52 @@ export const likePost = async (req, res) => {
 // UPDATE a POST
 export const updatePost = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { description, picturePath, userId } = req.body;
-    const post = await Post.findById(id);
+    const { postId } = req.params;
+    const { userId, description } = req.body; 
 
+    const post = await Post.findById(postId);
+
+    // validation
     if (!post) throw new Error('Post not found');
-    // if (post.userId !== userId) throw new Error('User is not authorized to edit this post');
-
-    let photoUrl = post.picturePath;
-    if (picturePath) {
-      photoUrl = await cloudinary.uploader.upload(picturePath);
+    if (post.userId !== userId) throw new Error('User is not authorized to update this post');
+    if (req.file && !['image/jpg', 'image/png', 'image/jpeg'].includes(req.file.mimetype)) {
+      throw new Error('Invalid image format.');
+    }
+    if (req.file && req.file.size > 2097152) {
+      throw new Error("Image must be less than 2mb");
     }
 
-    const updatedFields = {
-      description: description ? description : post.description,
-      picturePath: photoUrl ? photoUrl.url : post.picturePath,
-    };
+    let picturePath = post.picturePath;
+    if (req.file && req.file.path) {
+      picturePath = req.file.path;
+    }
 
-    const updatedPost = await Post.findByIdAndUpdate(
-      id,
-      updatedFields,
-      { new: true }
-    );
+    // update post contents
+    post.description = description;
+    post.picturePath = picturePath;
 
+    const updatedPost = await post.save();
     res.status(200).json(updatedPost);
   } catch (err) {
     res.status(404).json({ message: err.message });
   }
 };
 
+// DELETE a POST
 export const deletePost = async (req, res) => {
   try {
-      const { id } = req.params;
+      const { postId } = req.params;
       const { userId } = req.body; 
 
-      const post = await Post.findById(id);
+      const post = await Post.findById(postId);
 
       if (!post) throw new Error('Post not found');
-      // if (post.userId !== userId) throw new Error('User is not authorized to delete this post');
+      if (post.userId !== userId) throw new Error('User is not authorized to delete this post');
 
-      await Post.findByIdAndDelete(id);
+      await Post.findByIdAndDelete(postId);
+      const posts = await Post.find().sort({ createdAt: -1 });
 
-      res.status(200).json({ message: 'Post deleted successfully.' });
-
+      res.status(200).json(posts);
   } catch (err) {
       res.status(404).json({ message: err.message });
   }
@@ -203,7 +206,7 @@ export const deleteComment = async (req, res) => {
 export const updateComment = async (req, res) => {
   try {
     const { postId, commentId } = req.params;
-    const { userId, updatedComment } = req.body;
+    const { userId, updatedComment, updatedAt } = req.body;
     const post = await Post.findById(postId);
     const comment = post.comments.find(c => c.commentId === commentId);
 
@@ -220,6 +223,7 @@ export const updateComment = async (req, res) => {
 
     // update a comment
     comment.comment = updatedComment;
+    comment.updatedAt = updatedAt;
 
     const updatedPost = await Post.findByIdAndUpdate(
       postId,

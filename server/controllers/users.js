@@ -72,3 +72,50 @@ export const addRemoveFriend = async (req, res) => {
     res.status(404).json({ message: err.message });
   }
 };
+
+export const searchUser = async (req, res) => {
+  try {
+    const { searchTerm } = req.query;
+
+    if (!searchTerm) {
+      throw new Error("Search term is required");
+    }
+
+    const searchTermArray = searchTerm.trim().split(" ");
+    let firstNameRegex, lastNameRegex;
+
+    if (searchTermArray.length === 1) {
+      firstNameRegex = new RegExp(`^${searchTermArray[0]}`, "i");
+      lastNameRegex = new RegExp(`^${searchTermArray[0]}`, "i");
+    } else if (searchTermArray.length === 2) {
+      firstNameRegex = new RegExp(`^${searchTermArray[0]}`, "i");
+      lastNameRegex = new RegExp(`^${searchTermArray[1]}`, "i");
+    } else {
+      throw new Error("Invalid search term format");
+    }
+
+    const query = searchTermArray.length === 1
+      ? {
+          $or: [
+            { firstName: { $regex: firstNameRegex } },
+            { lastName: { $regex: lastNameRegex } },
+          ],
+        }
+      : {
+          $and: [
+            { firstName: { $regex: firstNameRegex } },
+            { lastName: { $regex: lastNameRegex } },
+          ],
+        };
+
+    const users = await User.find(query);
+
+    if (users.length === 0) {
+      return res.status(200).json({ message: "No user with that name." });
+    }
+
+    res.status(200).json(users);
+  } catch (err) {
+    res.status(404).json({ message: err.message });
+  }
+};

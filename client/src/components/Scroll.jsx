@@ -3,7 +3,6 @@ import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 
 const Scroll = () => {
     const { palette } = useTheme();
-    const bg = palette.neutral.medium;
 
     const handleClick = () => {
         window.scrollTo({
@@ -20,14 +19,16 @@ const Scroll = () => {
             position: "fixed",
             bottom: "0.3rem",
             right: "0.3rem",
-            bgcolor: bg,
+            bgcolor: palette.primary.light,
+            border: `1px solid ${palette.primary.main}`,
             opacity: 0.5,
             '&:hover': {
-                opacity: 1
+                opacity: 1,
+                bgcolor: palette.primary.light,
             }
         }}
         >
-            <KeyboardArrowUpIcon />
+            <KeyboardArrowUpIcon sx={{color: palette.primary.main}}/>
         </IconButton>
     );
 };

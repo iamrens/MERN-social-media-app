@@ -2,7 +2,7 @@ import { Typography, useTheme } from "@mui/material";
 import FlexBetween from "../../components/FlexBetween";
 import WidgetWrapper from "../../components/WidgetWrapper";
 
-const dbApi = process.env.REACT_APP_DB_API;
+const adsImage = process.env.REACT_APP_ADS;
 
 const AdvertWidget = () => {
   const { palette } = useTheme();
@@ -22,7 +22,7 @@ const AdvertWidget = () => {
         width="100%"
         height="auto"
         alt="advert"
-        src={`${dbApi}/assets/info4.jpeg`}
+        src={`${adsImage}`}
         style={{ borderRadius: "0.75rem", margin: "0.75rem 0" }}
       />
       <FlexBetween>
@@ -30,8 +30,7 @@ const AdvertWidget = () => {
         {/* <Typography color={medium}>mikacosmetics.com</Typography> */}
       </FlexBetween>
       <Typography color={medium} m="0.5rem 0">
-        Your pathway to stunning and immaculate beauty and made sure your skin
-        is exfoliating skin and shining like light.
+      Get ready for radiant and flawless skin with our natural and nourishing skincare line, designed to hydrate, revitalize, and protect your complexion.
       </Typography>
     </WidgetWrapper>
   );

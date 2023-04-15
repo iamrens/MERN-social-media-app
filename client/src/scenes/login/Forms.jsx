@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, Button, TextField, useMediaQuery, Typography, useTheme, CircularProgress } from "@mui/material";
+import { Box, Button, TextField, useMediaQuery, Typography, useTheme, CircularProgress, InputAdornment, IconButton } from "@mui/material";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import { Formik } from "formik";
@@ -10,6 +10,7 @@ import { setLogin, showSnackbar } from "../../state";
 import Dropzone from "react-dropzone";
 import FlexBetween from "../../components/FlexBetween";
 import axios from "axios";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 const registerSchema = yup.object().shape({
   firstName: yup.string().required("This field is required").min(2, "Must be 2-50 characters").max(50, "Must be 2-50 characters"),
@@ -68,6 +69,7 @@ const Forms = () => {
     const [ isLoading, setIsLoading ] = useState(false);
     const [error, setError] = useState(null);
     const [imgError, setImgError] = useState(null);
+    const [showPassword, setShowPassword] = useState(false);
   
     const register = async (values, onSubmitProps) => {
       setIsLoading(true);
@@ -246,19 +248,18 @@ const Forms = () => {
                           <Box
                             {...getRootProps()}
                             border={`2px dashed ${palette.primary.main}`}
-                            p="1rem"
+                            p="0.5rem"
                             sx={{ "&:hover": { cursor: "pointer" } }}
                           >
                             <input {...getInputProps()} />
-                            <p>Add Picture (jpg, jpeg, png)</p>
-                            <p style={{fontStyle: 'italic'}}>If none, default picture will be used.</p>
+                            <p>Add picture, else default will be used (format: png, jpg, jpeg).</p>
                           </Box>
                         ) : (
                           <FlexBetween>
                             <FlexBetween
                               {...getRootProps()}
                               border={`2px dashed ${palette.primary.main}`}
-                              p="1rem"
+                              p="0.5rem"
                               sx={{ "&:hover": { cursor: "pointer" }, width: "100%", mr: 1 }}
                             >
                               <input {...getInputProps()} />
@@ -298,7 +299,7 @@ const Forms = () => {
               />
               <TextField
                 label="Password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 onBlur={handleBlur}
                 onChange={handleChange}
                 value={values.password}
@@ -306,6 +307,18 @@ const Forms = () => {
                 error={Boolean(touched.password) && Boolean(errors.password)}
                 helperText={touched.password && errors.password}
                 sx={{ gridColumn: "span 4" }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
               />
             </Box>
 

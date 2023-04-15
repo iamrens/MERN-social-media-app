@@ -1,5 +1,5 @@
-import { EditOutlined, DeleteOutlined, AttachFileOutlined, GifBoxOutlined, ImageOutlined, MicOutlined, MoreHorizOutlined} from "@mui/icons-material";
-import { Box, Divider, Typography, InputBase, useTheme, Button, IconButton, useMediaQuery, CircularProgress} from "@mui/material";
+import { EditOutlined, DeleteOutlined, AttachFileOutlined, GifBoxOutlined, ImageOutlined, MicOutlined } from "@mui/icons-material";
+import { Box, Divider, Typography, InputBase, useTheme, Button, IconButton, useMediaQuery, CircularProgress, Tooltip } from "@mui/material";
 import FlexBetween from "../../components/FlexBetween";
 import Dropzone from "react-dropzone";
 import UserImage from "../../components/UserImage";
@@ -19,7 +19,7 @@ const MyPostWidget = ({ picturePath }) => {
   const { palette } = useTheme();
   const { _id } = useSelector((state) => state.user);
   const token = useSelector((state) => state.token);
-  const isNonMobileScreens = useMediaQuery("(min-width: 960px)");
+  const smScreens = useMediaQuery("(min-width: 450px)");
   const mediumMain = palette.neutral.mediumMain;
   const medium = palette.neutral.medium;
   const [isLoading, setIsLoading] = useState(false);
@@ -76,11 +76,13 @@ const MyPostWidget = ({ picturePath }) => {
           placeholder="What's on your mind..."
           onChange={(e) => setPost(e.target.value)}
           value={post}
+          multiline
+          maxRows={4}
           sx={{
             width: "100%",
             backgroundColor: palette.neutral.light,
             borderRadius: "2rem",
-            padding: "1rem 2rem",
+            padding: smScreens ? "1rem 2rem" : "1rem",
           }}
         />
       </FlexBetween>
@@ -153,40 +155,56 @@ const MyPostWidget = ({ picturePath }) => {
       </Box>
 
       <Divider sx={{ margin: "1.25rem 0" }} />
-
+      
+      
       <FlexBetween>
+        <Tooltip title="Upload image" placement="top">
         <FlexBetween gap="0.25rem" onClick={() => setIsImage(!isImage)}>
-          <ImageOutlined sx={{ color: mediumMain }} />
-          <Typography
+          <ImageOutlined sx={{ color: mediumMain, cursor: 'pointer' }} />
+          {smScreens && <Typography
             color={mediumMain}
             sx={{ "&:hover": { cursor: "pointer", color: medium } }}
           >
             Image
-          </Typography>
+          </Typography>}
         </FlexBetween>
-
-        {isNonMobileScreens ? (
-          <>
-            <FlexBetween gap="0.25rem">
-              <GifBoxOutlined sx={{ color: mediumMain }} />
-              <Typography color={mediumMain}>Clip</Typography>
-            </FlexBetween>
-
-            <FlexBetween gap="0.25rem">
-              <AttachFileOutlined sx={{ color: mediumMain }} />
-              <Typography color={mediumMain}>Attachment</Typography>
-            </FlexBetween>
-
-            <FlexBetween gap="0.25rem">
-              <MicOutlined sx={{ color: mediumMain }} />
-              <Typography color={mediumMain}>Audio</Typography>
-            </FlexBetween>
-          </>
-        ) : (
-          <FlexBetween gap="0.25rem">
-            <MoreHorizOutlined sx={{ color: mediumMain }} />
-          </FlexBetween>
-        )}
+        </Tooltip>
+        
+        <Tooltip title="In development..." placement="top">
+        <FlexBetween gap="0.25rem" >
+          <GifBoxOutlined sx={{ color: mediumMain, cursor: 'pointer' }} />
+          {smScreens && <Typography
+            color={mediumMain}
+            sx={{ "&:hover": { cursor: "pointer", color: medium } }}
+          >
+            Clip
+          </Typography>}
+        </FlexBetween>
+        </Tooltip>
+        
+        <Tooltip title="In development..." placement="top">
+        <FlexBetween gap="0.25rem" >
+          <AttachFileOutlined sx={{ color: mediumMain, cursor: 'pointer' }} />
+          {smScreens && <Typography
+            color={mediumMain}
+            sx={{ "&:hover": { cursor: "pointer", color: medium } }}
+          >
+            Attachment
+          </Typography>}
+        </FlexBetween>
+        </Tooltip>
+        
+        <Tooltip title="In development..." placement="top">
+        <FlexBetween gap="0.25rem" >
+          <MicOutlined sx={{ color: mediumMain, cursor: 'pointer' }} />
+          {smScreens && <Typography
+            color={mediumMain}
+            sx={{ "&:hover": { cursor: "pointer", color: medium } }}
+          >
+            Audio
+          </Typography>}
+        </FlexBetween>
+        </Tooltip>
 
         <Button
           disabled={!post || isLoading || !!error}

@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Box, Typography, useTheme, IconButton, TextField, useMediaQuery } from "@mui/material";
+import { Box, Typography, useTheme, IconButton, TextField, useMediaQuery, CircularProgress } from "@mui/material";
 import UserImage from './UserImage';
-import FlexBetween from './FlexBetween';
 import { setPost, showSnackbar } from '../state';
 import axios from "axios";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -13,7 +12,7 @@ import { formatDistanceToNow } from 'date-fns';
 
 const dbApi = process.env.REACT_APP_DB_API;
 
-const Comment = ({ userId, comment, postId, commentId, createdAt }) => {
+const Comment = ({ userId, comment, postId, commentId, createdAt, updatedAt }) => {
     const token = useSelector((state) => state.token)
     const { _id } = useSelector((state) => state.user);
     const [user , setUser] = useState("");
@@ -21,6 +20,7 @@ const Comment = ({ userId, comment, postId, commentId, createdAt }) => {
     const { palette } = useTheme();
     const [updatedComment, setUpdatedComment] = useState(comment);
     const [isEditing, setIsEditing] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const smScreens = useMediaQuery("(min-width: 500px)");
     const smMaxScreens = useMediaQuery("(max-width: 500px)");
 
@@ -42,6 +42,7 @@ const Comment = ({ userId, comment, postId, commentId, createdAt }) => {
     // console.log(createdAt)
 
     const deleteComment = async () => {
+      setIsLoading(true);
       try {
         const response = await axios.delete(`${dbApi}/posts/${postId}/comments/${commentId}`, 
           {
@@ -57,13 +58,16 @@ const Comment = ({ userId, comment, postId, commentId, createdAt }) => {
       } catch (err) {
         console.log(err, err.response.data.message);
         dispatch(showSnackbar({ open: true, message: 'Error deleting comment!', severity: 'error', autoHideDuration: 3000 }));
+      } finally {
+        setIsLoading(false)
       }
     };
 
     const editComment = async () => {
+      setIsLoading(true)
       try {
         const response = await axios.patch(`${dbApi}/posts/${postId}/comments/${commentId}`,
-          { updatedComment: updatedComment, userId: userId}, 
+          { updatedComment: updatedComment, userId: userId, updatedAt: Date.now()}, 
           {
             headers: { Authorization: `Bearer ${token}`},
           },
@@ -78,6 +82,7 @@ const Comment = ({ userId, comment, postId, commentId, createdAt }) => {
         dispatch(showSnackbar({ open: true, message: 'Error editting comment!', severity: 'error', autoHideDuration: 3000 }));
       } finally {
         setIsEditing(false)
+        setIsLoading(false)
       }
     };
 
@@ -100,7 +105,7 @@ const Comment = ({ userId, comment, postId, commentId, createdAt }) => {
             <Typography variant="h6" >{`${user.firstName} ${user.lastName}`}</Typography>
             {smScreens && 
               <Typography variant='body2' sx={{ color: palette.neutral.medium, wordWrap: "break-word", pl: 1.5}}>
-                {formatDistanceToNow(new Date(createdAt))}
+                {formatDistanceToNow(new Date(updatedAt || createdAt))}
               </Typography>
             }
           </Box>
@@ -133,20 +138,20 @@ const Comment = ({ userId, comment, postId, commentId, createdAt }) => {
         {_id === userId &&
           isEditing ? 
           <Box sx={{display: 'flex', alignItems: 'center', justifyContent: 'flex-end',}}>
-            <IconButton onClick={editComment} sx={{p: smMaxScreens ? 0.5 : 1}}>
-              <SaveIcon />
+            <IconButton onClick={editComment} disabled={isLoading} sx={{p: smMaxScreens ? 0.5 : 1, "&:hover": {bgcolor: palette.background.default}}}>
+              {isLoading ? <CircularProgress size={24} sx={{color: palette.primary.main}}/> : <SaveIcon />}
             </IconButton>   
-            <IconButton onClick={handleCancel} sx={{p: smMaxScreens ? 0.5 : 1}}>
+            <IconButton onClick={handleCancel} sx={{p: smMaxScreens ? 0.5 : 1,"&:hover": {bgcolor: palette.background.default}}}>
               <CancelIcon />
             </IconButton> 
           </Box> 
           :
           <Box sx={{display: 'flex', alignItems: 'center', justifyContent: 'flex-end',}}>
-            <IconButton onClick={handleEdit} sx={{p: smMaxScreens ? 0.5 : 1}}>
+            <IconButton onClick={handleEdit} sx={{p: smMaxScreens ? 0.5 : 1, "&:hover": {bgcolor: palette.background.default}}}>
               <EditIcon />
             </IconButton>   
-            <IconButton onClick={deleteComment} sx={{p: smMaxScreens ? 0.5 : 1}}>
-              <DeleteIcon />
+            <IconButton onClick={deleteComment} disabled={isLoading} sx={{p: smMaxScreens ? 0.5 : 1, "&:hover": {bgcolor: palette.background.default}}}>
+            {isLoading ? <CircularProgress size={24} sx={{color: palette.primary.main}}/> : <DeleteIcon />}
             </IconButton>    
           </Box>
         }
