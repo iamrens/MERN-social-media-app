@@ -9,6 +9,7 @@ import Homepage from "./scenes/Homepage";
 import Profile from "./scenes/Profile";
 import Scroll from "./components/Scroll";
 import MySnackbar from "./components/MySnackbar";
+import NotFound from "./scenes/NotFound";
 
 function App() {
   const mode = useSelector((state) => state.mode);
@@ -25,6 +26,7 @@ function App() {
             <Route path="/" element={ <Login /> } />
             <Route path="/home" element={ isAuth ? <Homepage /> : <Navigate to="/" /> }/>
             <Route path="/profile/:userId" element={ isAuth ? <Profile /> : <Navigate to="/" /> } />
+            <Route path="*" element={ <NotFound /> } />
           </Routes>
           <MySnackbar />
         </ThemeProvider>
