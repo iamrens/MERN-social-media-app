@@ -4,6 +4,7 @@ import WidgetWrapper from "../../components/WidgetWrapper";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setFriends } from "../../state";
+import axios from 'axios'
 
 const dbApi = process.env.REACT_APP_DB_API;
 
@@ -14,15 +15,18 @@ const FriendListWidget = ({ userId }) => {
   const friends = useSelector((state) => state.user.friends);
 
   const getFriends = async () => {
-    const response = await fetch(
-      `${dbApi}/users/${userId}/friends`,
-      {
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    const data = await response.json();
-    dispatch(setFriends({ friends: data }));
+    try {
+      const response = await axios.get(
+        `${dbApi}/users/${userId}/friends`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const data = response.data;
+      dispatch(setFriends({ friends: data }));
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   useEffect(() => {
@@ -46,7 +50,7 @@ const FriendListWidget = ({ userId }) => {
         <Box display="flex" flexDirection="column" gap="1.5rem" mt="1rem">
           {friends.length ? friends.map((friend) => (
             <Friend
-              key={`friend_${friend._id}`}
+              key={friend._id}
               friendId={friend._id}
               name={`${friend.firstName} ${friend.lastName}`}
               subtitle={friend.occupation}

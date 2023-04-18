@@ -19,27 +19,26 @@ const registerSchema = yup.object().shape({
   password: yup
     .string()
     .required("This field is required")
-    .min(8, "Password must be strong. Use at least 8 characters, including uppercase letters, digits, and symbols.")
+    .min(8, "Password must be at least 8 characters")
+    .max(50, "Password must be at most 50 characters")
     .matches(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/,
-      "Password must be strong. Use at least 8 characters, including uppercase letters, digits, and symbols."
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()\-_=+])[A-Za-z\d!@#$%^&*()\-_=+]+$/,
+      "Password must be strong. Use at least 8 characters, including uppercase letters, digits, and symbols (!@#$%^&*()-_=+)"
     ),
   location: yup.string(),
   occupation: yup.string(),
   picture: yup.string(),
 });
-  
+
 const loginSchema = yup.object().shape({
   email: yup.string().email("Invalid email format").required("This field is required").max(50, "Must be 50 characters at most"),
   password: yup
     .string()
     .required("This field is required")
     .min(8, "Password must be at least 8 characters")
-    .matches(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/,
-      "Password must be strong. Use at least 8 characters, including uppercase letters, digits, and symbols."
-    ),
+    .max(50, "Password must be at most 50 characters")
 });
+
   
   const initialValuesRegister = {
     firstName: "",
